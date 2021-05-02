@@ -17,7 +17,7 @@ library(dplyr)
 
 (1)Generate the first 10 coordinates of each µj vector j = 1, ..,3
 ```{r}
-ob <- cbind(rep(1,10),rep(2,20),rep(3,50))
+ob <- cbind(rep(1,20),rep(2,30),rep(3,50))
 sampling <- NULL
 for (i in 1:10) {
 first_10 <- rnorm(3,0,1) #mu
