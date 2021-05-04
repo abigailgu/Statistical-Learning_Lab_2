@@ -6,6 +6,8 @@ output:
   html_document: default
   pdf_document: default
 subtitle: Lab 2 - Elections and RNA-sequencing
+editor_options: 
+  chunk_output_type: inline
 ---
 1 Simulation Study
 1.1 The data generation process
@@ -21,6 +23,10 @@ library(dendextend)
 library(readxl)
 library(fuzzyjoin)
 library(stringr)
+library(ggdendro)
+library(viridis)
+
+
 ```
 
 # **1. Simulation Study:**
@@ -137,9 +143,9 @@ temp <- as.data.frame(temp)
 ggplot(temp,aes(x = sd_accurancy, y = avg)) + geom_point()
 
 ```
-```{r}
-kable(temp) %>% kable_styling()
 
+```{r}
+#kable(temp) %>% kable_styling()
 ```
 
 ```{r}
@@ -193,27 +199,22 @@ cbs_semp20 <- filter(cbs_df1, סמל.ישוב %in% Semp_20)
 
 ### Q2
 ```{r}
-#לעשות את הגרף חתיך 
-dist_votes <- dist(knesset_semp20[8:46], method = "euclidean", labels)
-dend_votes <- as.dendrogram(hclust(dist_votes, method = "complete"))
-#plot(dend_votes)
+dend_votes <- knesset_semp20[,c(2,8:46)] %>% dist %>% hclust %>% as.dendrogram(method = "complete", leaflab = 'textlike') %>% set("labels", knesset_semp20$שם.ישוב)
+
+ggdendrogram(dend_votes)+ ggtitle("Dendogram of the knesset df")
 ```
 
 
 ### Q3
 ```{r}
-#לבחור את הפרמטרים שנחשב לפיהם את המרחק ולשנות את השמות של המשתנים 
+dend_cbs <- cbs_semp20[c(2:16)] %>% scale %>% dist(method = "euclidean")  %>% hclust %>% as.dendrogram(method = "complete", leaflab = 'textlike') %>% set("labels", cbs_semp20$`שם יישוב`)
 
-# dist_votes <- dist(   , method = "euclidean", labels)
-# dend_votes <- as.dendrogram(hclust(dist_votes, method = "complete"))
-# plot(dend_votes)
+ggdendrogram(dend_cbs)+ ggtitle("Dendogram of the cbs df")
+
 ```
 
 ### Q4
-```{r}
-
-```
-
+#כאן צריך לכתוב על קווי דמיון ושוני בין שתי הדנדוגרמות 
 
 ### Q5
 ```{r}
