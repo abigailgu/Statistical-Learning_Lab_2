@@ -1,22 +1,36 @@
 ---
-title: "Statistical Learning 2"
-output: html_document
+title: "Statistical Learning and Data Analysis 2021 - 52525"
+author: 'Abigail Gutman and Shahar Shalom '
+date: "18/5/2021"
+output:
+  html_document: default
+  pdf_document: default
+subtitle: Lab 2 - Elections and RNA-sequencing
 ---
 1 Simulation Study
 1.1 The data generation process
 
 
-```{r setup, include=FALSE}
+```{r setup, include=FALSE, message=FALSE, warning=FALSE}
 library('MASS')
 library(data.table)
 library(ggplot2)
 library(kableExtra)
 library(dplyr)
+library(dendextend)
+library(readxl)
+library(fuzzyjoin)
+library(stringr)
 ```
 
+# **1. Simulation Study:**
 
-(1)Generate the first 10 coordinates of each µj vector j = 1, ..,3
-```{r}
+### Q1:
+Generate the first 10 coordinates of each µj vector j = 1, ..,3
+```{r, warning=FALSE}
+options(scipen = 999)
+
+
 ob <- cbind(rep(1,20),rep(2,30),rep(3,50))
 sampling <- NULL
 for (i in 1:10) {
@@ -37,7 +51,8 @@ multi_fun <- function(s){
 
 ```
 
-(2) Write a function that outputs a simulated dataset of dimension (100 × p)
+### Q2:
+Write a function that outputs a simulated dataset of dimension (100 × p)
 ```{r}
 create_data <- function(sampling, p, sigma_e){
   x_data <- NULL
@@ -58,10 +73,16 @@ create_data <- function(sampling, p, sigma_e){
 }
 ```
 
-(3)Choose 4 levels of σ^2 and use p = 10, 20, 50.
+### Q3
+Choose 4 levels of σ^2 and use p = 10, 20, 50.
 choosing sigma : 1,2,5,7
-(4) For each combination of σ^2 and p, generate multiple datasets (say B = 50).
-(5) For each data-set, run K-means once on the p dimensional data, and save accuracy and run-time.
+
+### Q4
+For each combination of σ^2 and p, generate multiple datasets (say B = 50).
+
+### Q5
+For each data-set, run K-means once on the p dimensional data, and save accuracy and
+run-time.
 ```{r, warning=FALSE}
 sigma_list <- c(1,2,5,7)
 p <- c(10,20,50)
@@ -88,7 +109,10 @@ l <- c(paste0("p = ",10, ",sigma = ",1),paste0("p = ",10, ",sigma = ",2),
       paste0("p = ",50, ",sigma = ",1),paste0("p = ",50, ",sigma = ",2),
       paste0("p = ",50, ",sigma = ",5),paste0("p = ",50, ",sigma = ",7))
 ```
-6. Compute the average accuracy and the standard-error for each (p, σ2). Display these in a figure and a
+
+
+### Q6
+Compute the average accuracy and the standard-error for each (p, σ2). Display these in a figure and a
 table.
 
 ```{r,warning= False, message=FALSE}
@@ -122,3 +146,88 @@ kable(temp) %>% kable_styling()
 temp2 <-bind_rows(temp2, .id = "column_label")
 ggplot(temp2, aes(x = run.time, y = accurancy, group = column_label, col = column_label)) + geom_point() + facet_wrap(~column_label)+ theme(legend.position = "none")
 ```
+
+
+
+
+# **2. Comparing demographic and election data:**
+
+```{r}
+#load the data frames
+cbs_df <- read.delim("C:/Users/Shahar/Dropbox/zugi/lemida/cbs_demographics.txt")
+knesset_df <- read.csv("C:/Users/Shahar/Dropbox/zugi/lemida/knesset_24.csv", encoding = "UTF-8")
+
+#social economic data frame of 2013 from the ISB
+T1 <- read_excel("C:/Users/Shahar/Dropbox/zugi/lemida/bycode2013.xls")
+```
+
+### Q1
+```{r, message=F}
+#clean the names of the village in both data frames for maximal result of matches when we merged the data frames. 
+T1$village <- str_replace_all(T1$village, "'", "")
+T1$village <- str_replace_all(T1$village, " ", "")
+T1$village <- str_replace_all(T1$village, "-", "")
+cbs_df$village <- str_replace_all(cbs_df$village, "'", "")
+cbs_df$village <- str_replace_all(cbs_df$village, " ", "")
+cbs_df$village <- str_replace_all(cbs_df$village, "-", "")
+
+#add the semel yeshuv to the cbs data frame 
+cbs_df1 <- merge(cbs_df,T1)
+
+#merged the datas. 
+merged_df <- merge(cbs_df1,knesset_df)
+
+#semple 20 locations 
+Semp_20 <- sample(merged_df$סמל.ישוב, 20)
+
+# sum all the votes for each location 
+#calculate the persents of votes for each party in every location 
+knesset_df_norm <- knesset_df %>%rowwise %>% mutate(total_votes = sum(c_across(8:46))) %>% ungroup() %>%  mutate(round(across(8:46, ~ . / total_votes),3))
+
+#filter each data frame for the sempled values.
+knesset_semp20 <- filter(knesset_df_norm, סמל.ישוב %in% Semp_20)
+rownames(knesset_semp20) <- knesset_semp20$שם.ישוב
+cbs_semp20 <- filter(cbs_df1, סמל.ישוב %in% Semp_20) 
+```
+
+
+### Q2
+```{r}
+#לעשות את הגרף חתיך 
+dist_votes <- dist(knesset_semp20[8:46], method = "euclidean", labels)
+dend_votes <- as.dendrogram(hclust(dist_votes, method = "complete"))
+#plot(dend_votes)
+```
+
+
+### Q3
+```{r}
+#לבחור את הפרמטרים שנחשב לפיהם את המרחק ולשנות את השמות של המשתנים 
+
+# dist_votes <- dist(   , method = "euclidean", labels)
+# dend_votes <- as.dendrogram(hclust(dist_votes, method = "complete"))
+# plot(dend_votes)
+```
+
+### Q4
+```{r}
+
+```
+
+
+### Q5
+```{r}
+
+```
+
+
+### Q6
+```{r}
+
+```
+
+
+
+# **3. Exploratory analysis of RNA seq data:**
+
+
