@@ -26,7 +26,6 @@ library(stringr)
 library(ggdendro)
 library(viridis)
 
-
 ```
 
 # **1. Simulation Study:**
@@ -45,13 +44,28 @@ sampling <- rbind(sampling,first_10)
 colnames(sampling) <- c(1:3)
 }
 
+
+```
+
+```{r}
+calculate.accuracy <- function(data, cluster_data)
+{
+  matching <- Map(function(data, cluster_data) { data %in% cluster_data }, data, cluster_data)
+  tf <- unlist(matching, use.names=FALSE)
+  return (sum(tf)/length(tf))
+}
+```
+
+
+```{r}
+
 multi_fun <- function(s){
   start.time <- Sys.time()
-  model <- kmeans(s,3,1)
+  model <- kmeans(s,3,1,algorithm = "Lloyd")
   end.time <- Sys.time()
   time.taken <- end.time - start.time
   accurancy <- model$cluster
-  accurancy <- sum(accurancy == ob)/100
+  accurancy <- calculate.accuracy(accurancy,ob)
   return(list(accurancy,time.taken))
 }
 
@@ -81,7 +95,7 @@ create_data <- function(sampling, p, sigma_e){
 
 ### Q3
 Choose 4 levels of σ^2 and use p = 10, 20, 50.
-choosing sigma : 1,2,5,7
+choosing sigma : 1,7,150,212
 
 ### Q4
 For each combination of σ^2 and p, generate multiple datasets (say B = 50).
@@ -90,7 +104,7 @@ For each combination of σ^2 and p, generate multiple datasets (say B = 50).
 For each data-set, run K-means once on the p dimensional data, and save accuracy and
 run-time.
 ```{r, warning=FALSE}
-sigma_list <- c(1,2,5,7)
+sigma_list <- c(1,7,150,212)
 p <- c(10,20,50)
 simulation <- function(sampling,p,sigma_list,B){
   s_total <- NULL
@@ -103,17 +117,16 @@ simulation <- function(sampling,p,sigma_list,B){
       s_total <- cbind(s_total,s)
     }
   }
-  
-  return(s_total)
+    return(s_total)
 }
 
 gene <- simulation(sampling,p,sigma_list,50)
-l <- c(paste0("p = ",10, ",sigma = ",1),paste0("p = ",10, ",sigma = ",2),
-      paste0("p = ",10, ",sigma = ",5),paste0("p = ",10, ",sigma = ",7),
-      paste0("p = ",20, ",sigma = ",1),paste0("p = ",20, ",sigma = ",2),
-      paste0("p = ",20, ",sigma = ",5),paste0("p = ",20, ",sigma = ",7),
-      paste0("p = ",50, ",sigma = ",1),paste0("p = ",50, ",sigma = ",2),
-      paste0("p = ",50, ",sigma = ",5),paste0("p = ",50, ",sigma = ",7))
+l <- c(paste0("p = ",10, ",sigma = ",1),paste0("p = ",10, ",sigma = ",7),
+      paste0("p = ",10, ",sigma = ",150),paste0("p = ",10, ",sigma = ",212),
+      paste0("p = ",20, ",sigma = ",1),paste0("p = ",20, ",sigma = ",7),
+      paste0("p = ",20, ",sigma = ",150),paste0("p = ",20, ",sigma = ",212),
+      paste0("p = ",50, ",sigma = ",1),paste0("p = ",50, ",sigma = ",7),
+      paste0("p = ",50, ",sigma = ",150),paste0("p = ",50, ",sigma = ",212))
 ```
 
 
@@ -230,5 +243,18 @@ ggdendrogram(dend_cbs)+ ggtitle("Dendogram of the cbs df")
 
 
 # **3. Exploratory analysis of RNA seq data:**
+
+```{r}
+k_means_shiny <- function(k){
+  data_prep <- scale(med_dat,T,T)
+  m <- sample(med_dat,k)
+  c_t <- #
+}
+
+
+
+```
+
+
 
 
