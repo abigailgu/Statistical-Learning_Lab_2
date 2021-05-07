@@ -245,16 +245,42 @@ ggdendrogram(dend_cbs)+ ggtitle("Dendogram of the cbs df")
 # **3. Exploratory analysis of RNA seq data:**
 
 ```{r}
+library(dplyr)
+library(data.table)
 k_means_shiny <- function(k){
   data_prep <- scale(med_dat,T,T)
-  m <- sample(med_dat,k)
-  c_t <- #
+  m_new <- sample_n(med_dat,k)
+  c_t <- lapply(data_prep ,FUN = c_fun, m=m_new)
+  print(c_t)
+  
+  
+  #while(any(abs(m_new - m_old)) > 0.001){
+  #data_prep["cluster"] <- c_t
+  #m_old <- m_new
+  #m_new <- data_prep %>% group_by(cluster) %>% summarise(mean)
+  #c_t <- data_prep[,!"cluster"]  %>% lapply(FUN = c_fun,m = m_new)
+  #print(data_prep[,"cluster"])
+  #}
+  #return(data_prep[,"cluster"])
 }
 
+c_fun <- function(d,m){
+  print(d)
+  p <- (m - d)**2
+  p <- lapply(p,sum)
+  p <- lapply(p,which.min)
+  #return(which.min(p))
+  #print(p)
+}
 
+med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct',
+                      skip = 2 ,row.names=c(1) , header = TRUE)
+gen_names <- med_dat[, 1]
+med_dat <- med_dat[,-1]
+med_dat <- transpose(med_dat)
+
+
+
+k_means_shiny(15)
 
 ```
-
-
-
-
