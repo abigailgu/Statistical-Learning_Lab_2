@@ -171,9 +171,9 @@ ggplot(temp2, aes(x = run.time, y = accurancy, group = column_label, col = colum
 
 # **2. Comparing demographic and election data:**
 
-```{r}
+```{r, message=F, error=F, warning=F}
 #load the data frames
-cbs_df <- read.delim("C:/Users/Shahar/Dropbox/zugi/lemida/cbs_demographics.txt")
+CBS_df <- read.delim("C:/Users/Shahar/Dropbox/zugi/lemida/cbs_demographics.txt")
 knesset_df <- read.csv("C:/Users/Shahar/Dropbox/zugi/lemida/knesset_24.csv", encoding = "UTF-8")
 
 #social economic data frame of 2013 from the ISB
@@ -181,62 +181,80 @@ T1 <- read_excel("C:/Users/Shahar/Dropbox/zugi/lemida/bycode2013.xls")
 ```
 
 ### Q1
-```{r, message=F}
+
+In this question we have sampled 20 different locations that we would like to investigate.
+
+```{r, message=F, error=F, warning=F}
 #clean the names of the village in both data frames for maximal result of matches when we merged the data frames. 
 T1$village <- str_replace_all(T1$village, "'", "")
 T1$village <- str_replace_all(T1$village, " ", "")
 T1$village <- str_replace_all(T1$village, "-", "")
-cbs_df$village <- str_replace_all(cbs_df$village, "'", "")
-cbs_df$village <- str_replace_all(cbs_df$village, " ", "")
-cbs_df$village <- str_replace_all(cbs_df$village, "-", "")
+CBS_df$village <- str_replace_all(CBS_df$village, "'", "")
+CBS_df$village <- str_replace_all(CBS_df$village, " ", "")
+CBS_df$village <- str_replace_all(CBS_df$village, "-", "")
 
-#add the semel yeshuv to the cbs data frame 
-cbs_df1 <- merge(cbs_df,T1)
+#add the location name to the CBS data frame 
+CBS_df1 <- merge(CBS_df,T1)
 
 #merged the datas. 
-merged_df <- merge(cbs_df1,knesset_df)
+merged_df <- merge(CBS_df1,knesset_df)
 
 #semple 20 locations 
-Semp_20 <- sample(merged_df$סמל.ישוב, 20)
+Semp_20 <- sample(merged_df$"סמל.ישוב", 20)
 
 # sum all the votes for each location 
 #calculate the persents of votes for each party in every location 
-knesset_df_norm <- knesset_df %>%rowwise %>% mutate(total_votes = sum(c_across(8:46))) %>% ungroup() %>%  mutate(round(across(8:46, ~ . / total_votes),3))
+knesset_df_norm <- knesset_df %>%rowwise %>% mutate(total_votes = sum(c_across( 8:46))) %>% ungroup() %>%  mutate(round(across(8:46, ~ . / total_votes),3))
 
 #filter each data frame for the sempled values.
-knesset_semp20 <- filter(knesset_df_norm, סמל.ישוב %in% Semp_20)
-rownames(knesset_semp20) <- knesset_semp20$שם.ישוב
-cbs_semp20 <- filter(cbs_df1, סמל.ישוב %in% Semp_20) 
+knesset_semp20 <- filter(knesset_df_norm, knesset_df_norm$"סמל.ישוב" %in% Semp_20)
+rownames(knesset_semp20) <- knesset_semp20$"שם.ישוב"
+
+CBS_semp20 <- filter(CBS_df1, CBS_df1$"סמל.ישוב" %in% Semp_20) 
 ```
 
 
 ### Q2
-```{r}
-dend_votes <- knesset_semp20[,c(2,8:46)] %>% dist %>% hclust %>% as.dendrogram(method = "complete", leaflab = 'textlike') %>% set("labels", knesset_semp20$שם.ישוב)
 
-ggdendrogram(dend_votes)+ ggtitle("Dendogram of the knesset df")
+הסיבה לשימוש באלגוריתם סינגל היא שאנחנו רוצות למצוא אשכולות של ערים אשר קרובות אחת לשניה מבחינת אופי פיזור הקולות בעיר. 
+
+```{r, message=F, error=F, warning=F}
+#Create dendogram model of all the votes result in each location
+dend_votes <- knesset_semp20[,c(8:46)] %>% dist %>% hclust(method = "single") %>% as.dendrogram %>% set("labels", knesset_semp20$"שם.ישוב")
+
+ggdendrogram(dend_votes)+ ggtitle("Cluster Dendogram of the 24th Knesset elections results - Single Link")
 ```
 
 
 ### Q3
-```{r}
-dend_cbs <- cbs_semp20[c(2:16)] %>% scale %>% dist(method = "euclidean")  %>% hclust %>% as.dendrogram(method = "complete", leaflab = 'textlike') %>% set("labels", cbs_semp20$`שם יישוב`)
 
-ggdendrogram(dend_cbs)+ ggtitle("Dendogram of the cbs df")
+גם כאן בחרנו להריץ את אלגוריתם סינגל.
+בחרנו לבצע חלוקה לאשכולות על פי רמת החיים של התושבים בעיר 
+```{r, message=F, error=F, warning=F}
+#DF that includ all of the living standart drom the CBS data frame
+living_stand <- CBS_semp20[which(colnames(CBS_semp20) %in% c('income', 'motorization','avgvehicle','avgabroad'))]
+
+#create dendogram based on this data
+dend_living_stand <- living_stand %>% scale %>% dist %>% hclust(method = "single") %>% 
+
+as.dendrogram %>% set("labels", CBS_semp20$`שם יישוב`)
+ggdendrogram(dend_living_stand)+ ggtitle("Dendogram of the cbs df")
 
 ```
+
+
 
 ### Q4
 #כאן צריך לכתוב על קווי דמיון ושוני בין שתי הדנדוגרמות 
 
 ### Q5
-```{r}
+```{r, message=F, error=F, warning=F}
 
 ```
 
 
 ### Q6
-```{r}
+```{r, message=F, error=F, warning=F}
 
 ```
 
@@ -244,7 +262,7 @@ ggdendrogram(dend_cbs)+ ggtitle("Dendogram of the cbs df")
 
 # **3. Exploratory analysis of RNA seq data:**
 
-```{r}
+```{r, message=F, error=F, warning=F}
 library(dplyr)
 library(data.table)
 k_means_shiny <- function(k){
