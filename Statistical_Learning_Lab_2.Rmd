@@ -25,6 +25,7 @@ library(fuzzyjoin)
 library(stringr)
 library(ggdendro)
 library(viridis)
+library(factoextra)
 ```
 
 # **1. Simulation Study:**
@@ -172,44 +173,33 @@ ggplot(temp2, aes(x = run.time, y = accurancy, group = column_label, col = colum
 
 ```{r, message=F, error=F, warning=F}
 #load the data frames
-CBS_df <- read.delim("C:/Users/Shahar/Dropbox/zugi/lemida/cbs_demographics.txt")
 knesset_df <- read.csv("C:/Users/Shahar/Dropbox/zugi/lemida/knesset_24.csv", encoding = "UTF-8")
-
-#social economic data frame of 2013 from the ISB
-T1 <- read_excel("C:/Users/Shahar/Dropbox/zugi/lemida/bycode2013.xls")
+CBS_df <- read_excel("C:/Users/Shahar/Dropbox/zugi/lemida/t01.xls")
 ```
 
 ### Q1
 
 In this question we have sampled 20 different locations that we would like to investigate.
+We used the socio economic data from 2013 from the ISB website. 
 
-```{r, message=F, error=F, warning=F}
-#clean the names of the village in both data frames for maximal result of matches when we merged the data frames. 
-T1$village <- str_replace_all(T1$village, "[[:punct:]]", "")
-CBS_df$village <- str_replace_all(CBS_df$village, "[[:punct:]]", "")
+```{r,message=F}
+#first, we merge the data frames to find the matching locations in both. 
+merged_df <- left_join(CBS_df, knesset_df, by = "סמל.ישוב")
 
-T1$village <- str_replace_all(T1$village, " ", "")
-CBS_df$village <- str_replace_all(CBS_df$village, " ", "")
-
-#add the location name to the CBS data frame 
-CBS_df1 <- merge(CBS_df,T1)
-knesset_df1 <- merge(knesset_df, T1) 
-
-#merged the datas. 
-merged_df <- merge(CBS_df1,knesset_df)
-rownames(merged_df) <- merged_df$village
+#add "שם.ישוב" coloumn to the CBS data frame 
+names_df <- as.data.frame(knesset_df[,2:3])
+CBS_df <- left_join(CBS_df, names_df)
 
 #semple 20 locations 
 Semp_20 <- sample(merged_df$"סמל.ישוב" , 20)
 
 # sum all the votes for each location 
 #calculate the persents of votes for each party in every location 
-knesset_df_norm <- knesset_df1 %>%rowwise %>% mutate(total_votes = sum(c_across( 8:46))) %>% ungroup() %>%  mutate(round(across(8:46, ~ . / total_votes),3))
+knesset_df_norm <- knesset_df %>%rowwise %>% mutate(total_votes = sum(c_across( 8:46))) %>% ungroup() %>%  mutate(round(across(8:46, ~ . / total_votes),3))
 
 #filter each data frame for the sempled values.
 knesset_semp20 <- filter(knesset_df_norm, knesset_df_norm$"סמל.ישוב" %in% Semp_20)
-CBS_semp20 <- filter(CBS_df1, CBS_df1$"סמל.ישוב" %in% Semp_20) 
-
+CBS_semp20 <- filter(CBS_df, CBS_df$"סמל.ישוב" %in% Semp_20) 
 ```
 
 
@@ -217,61 +207,49 @@ CBS_semp20 <- filter(CBS_df1, CBS_df1$"סמל.ישוב" %in% Semp_20)
 
 הסיבה לשימוש באלגוריתם סינגל היא שאנחנו רוצות למצוא אשכולות של ערים אשר קרובות אחת לשניה מבחינת אופי פיזור הקולות בעיר. 
 ```{r}
-votes_dist <-  knesset_semp20[,c(8:46)] %>% dist
-clus <- hcut(votes_dist, k = 4, hc_func = 'hclust', 
-             hc_method = 'single', graph = FALSE, isdiss = TRUE)
+knesst_dist <- knesset_semp20[,c(8:46)] %>% dist %>% hclust(method = "single")
+knesst_dend <- as.dendrogram(knesst_dist)
+labels(knesst_dend) <- knesset_semp20$'שם.ישוב'
 
-dend <- as.dendrogram(clus)
-labels(dend) <- knesset_semp20$"שם.ישוב"
-dend <- sort(dend, decreasing = FALSE)
-
-g1 <- ggplot(dend %>% set('branches_k_color', k = 4) %>%
-                set('branches_lwd', 0.6) %>%
+Knesst_plot <- ggplot(knesst_dend %>% set('branches_k_color', k = 4) %>%
+                set('branches_lwd', 0.7) %>%
                 set('labels_colors', k = 4) %>%
-                set('labels_cex', 0.6), 
+                set('labels_cex', 0.8), 
                 horiz = TRUE) 
-g1
+# Knesst_plot
 ```
-
 
 ### Q3
 
 גם כאן בחרנו להריץ את אלגוריתם סינגל.
-בחרנו לבצע חלוקה לאשכולות על פי רמת החיים של התושבים בעיר 
+בחרנו לבצע חלוקה לאשכולות על פי רמת החיים של התושבים בעיר
+
+
 ```{r}
-living_stand_dist <- CBS_semp20[which(colnames(CBS_semp20) %in% c('income', 'motorization','avgvehicle','avgabroad'))] %>% scale %>% dist
-clus1 <- hcut(living_stand_dist, k = 4, hc_func = 'hclust', 
-             hc_method = 'single')
+living_stand_dist <- CBS_semp20[which(colnames(CBS_semp20) %in% c('income', 'motorization','avgvehicle','avg_abroad'))]
 
-dend1 <- as.dendrogram(clus1)
-labels(dend1) <- knesset_semp20$"שם.ישוב"
-dend1 <- sort(dend1, decreasing = FALSE)
+CBS_dist <- living_stand_dist %>% scale %>% dist %>% hclust(method = "single")
+CBS_dend <- as.dendrogram(CBS_dist)
+labels(CBS_dend) <- CBS_semp20$'שם.ישוב'
 
-g2 <- ggplot(dend1 %>% set('branches_k_color', k = 4) %>%
-                set('branches_lwd', 0.6) %>%
+CBS_plot <- ggplot(CBS_dend %>% set('branches_k_color', k = 4) %>%
+                set('branches_lwd', 0.7) %>%
                 set('labels_colors', k = 4) %>%
-                set('labels_cex', 0.6), 
+                set('labels_cex', 0.8), 
                 horiz = TRUE) 
 
-g2
+# CBS_plot
 ```
+
 
 ### Q4
 #כאן צריך לכתוב על קווי דמיון ושוני בין שתי הדנדוגרמות 
 ```{r}
 
-hc1 <- hclust(votes_dist, method = "single")
-hc2 <- hclust(living_stand_dist, method = "single")
+dend_list <- dendlist(knesst_dend, CBS_dend) %>%  untangle() %>% tanglegram()
 
 
-labels(hc1) <- knesset_semp20$`שם יישוב`
-labels(hc2) <- CBS_semp20$`שם יישוב`
 
-# Create two dendrograms
-dend1 <- as.dendrogram (hc1)
-dend2 <- as.dendrogram (hc2)
-
-tanglegram(dend1, dend2)
 ```
 
 ### Q5
