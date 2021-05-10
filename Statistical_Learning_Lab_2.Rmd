@@ -24,7 +24,6 @@ library(readxl)
 library(fuzzyjoin)
 library(stringr)
 library(ggdendro)
-library(viridis)
 library(factoextra)
 ```
 
