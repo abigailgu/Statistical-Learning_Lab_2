@@ -9,9 +9,6 @@ subtitle: Lab 2 - Elections and RNA-sequencing
 editor_options: 
   chunk_output_type: inline
 ---
-1 Simulation Study
-1.1 The data generation process
-
 
 ```{r setup, include=FALSE, message=FALSE, warning=FALSE}
 library('MASS')
@@ -178,8 +175,8 @@ CBS_df <- read_excel("C:/Users/Shahar/Dropbox/zugi/lemida/t01.xls")
 
 ### Q1
 
-In this question we have sampled 20 different locations that we would like to investigate.
-We used the socio economic data from 2013 from the ISB website. 
+In this question we sampled 20 different locations that we would like to investigate.
+We used the socio economic data from 2013 from the ISB website for the socio economic data and the 24 election results data.
 
 ```{r,message=F}
 #first, we merge the data frames to find the matching locations in both. 
@@ -204,52 +201,61 @@ CBS_semp20 <- filter(CBS_df, CBS_df$"סמל.ישוב" %in% Semp_20)
 
 ### Q2
 
-הסיבה לשימוש באלגוריתם סינגל היא שאנחנו רוצות למצוא אשכולות של ערים אשר קרובות אחת לשניה מבחינת אופי פיזור הקולות בעיר. 
+In this question we created dendogram that present the minimum distance between the 20 locations that we sampled and divides them into four clusters.
+we used the Single linked method becouse we would like to see clusters of cities that  the voting patterns among them are the closest.
+
+
+#לנסות לבדוק מה מספר האשכולות האופטימלי
+#לנסות לבדוק את השיטה של החלוקה ולהראות שמספק האשכולות מוצדק 
 ```{r}
-knesst_dist <- knesset_semp20[,c(8:46)] %>% dist %>% hclust(method = "single")
+knesst_dist <- knesset_semp20[,c(8:46)] %>% dist %>% hclust(method = "complete")
 knesst_dend <- as.dendrogram(knesst_dist)
-labels(knesst_dend) <- knesset_semp20$'שם.ישוב'
+labels(knesst_dend) <- as.character(knesset_semp20$'שם.ישוב')
 
 Knesst_plot <- ggplot(knesst_dend %>% set('branches_k_color', k = 4) %>%
                 set('branches_lwd', 0.7) %>%
                 set('labels_colors', k = 4) %>%
                 set('labels_cex', 0.8), 
-                horiz = TRUE) 
-# Knesst_plot
+                horiz = TRUE) + ggtitle("Hirarchical tree of the 24 election datas with Single linked algorithm", "*Each color present diffrent cluster")
+
+Knesst_plot
 ```
 
+
 ### Q3
-
-גם כאן בחרנו להריץ את אלגוריתם סינגל.
-בחרנו לבצע חלוקה לאשכולות על פי רמת החיים של התושבים בעיר
-
+Similer to Q2 we choose here to use the singel linked method so we can see in each cluster the cities that have similar Characteristic properties which used for calculating a socio-economic index. 
 
 ```{r}
-living_stand_dist <- CBS_semp20[which(colnames(CBS_semp20) %in% c('income', 'motorization','avgvehicle','avg_abroad'))]
-
-CBS_dist <- living_stand_dist %>% scale %>% dist %>% hclust(method = "single")
+CBS_dist <- CBS_semp20[,6:17] %>% scale %>% dist %>% hclust(method = "single")
 CBS_dend <- as.dendrogram(CBS_dist)
-labels(CBS_dend) <- CBS_semp20$'שם.ישוב'
+labels(CBS_dend) <- as.character(CBS_semp20$'שם.ישוב')
 
 CBS_plot <- ggplot(CBS_dend %>% set('branches_k_color', k = 4) %>%
                 set('branches_lwd', 0.7) %>%
                 set('labels_colors', k = 4) %>%
                 set('labels_cex', 0.8), 
-                horiz = TRUE) 
+                horiz = TRUE) + ggtitle("Hirarchical tree of the CBS datas with Single linked algorithm", "*Each color present diffrent cluster")
 
-# CBS_plot
+CBS_plot
 ```
 
 
 ### Q4
-#כאן צריך לכתוב על קווי דמיון ושוני בין שתי הדנדוגרמות 
+
+In this question we tried to visualized the diffrents between the two dendograms.
+
+Even before we see the visual comparison we tend to think that while there are some cities that have received a similar characterization in the two dendograms, yet most cities get a different height and sometimes completely opposite from the height they received in the other dendogram.
+
 ```{r}
+dl <- dendlist(highlight_branches_col(knesst_dend), highlight_branches_col(CBS_dend))
 
-dend_list <- dendlist(knesst_dend, CBS_dend) %>%  untangle() %>% tanglegram()
-
-
-
+tanglegram(dl, sort = TRUE, common_subtrees_color_lines = FALSE, highlight_distinct_edges  = FALSE, highlight_branches_lwd = FALSE, main_left = "CBS", main_right = "Knesset") 
 ```
+
+After examining the visual comparison between the trees we understand that our hypothesis is correct and that although both trees have some exact characteristics but most cities get a completely different characterization in each of the dendograms.
+
+However, this does not mean that one of the dendograms is incorrect, the reason for the large differences between the two is a different effect of socioeconomic status on the population in each city, in addition we should remember that the population in the State of Israel is very far from being a homogeneous population. 
+
 
 ### Q5
 ```{r, message=F, error=F, warning=F}
