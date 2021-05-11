@@ -35,7 +35,7 @@ Generate the first 10 coordinates of each µj vector j = 1, ..,3
 options(scipen = 999)
 
 
-ob <- cbind(rep(1,20),rep(2,30),rep(3,50))
+ob <- c(rep(1,20),rep(2,30),rep(3,50))
 sampling <- NULL
 for (i in 1:10) {
 first_10 <- rnorm(3,0,1) #mu
@@ -43,16 +43,27 @@ sampling <- rbind(sampling,first_10)
 colnames(sampling) <- c(1:3)
 }
 
-
 ```
 
 ```{r}
-calculate.accuracy <- function(data, cluster_data)
-{
-  matching <- Map(function(data, cluster_data) { data %in% cluster_data }, data, cluster_data)
-  tf <- unlist(matching, use.names=FALSE)
-  return (sum(tf)/length(tf))
-}
+calculate.accuracy <- function(data, cluster_data){
+  tab <- table(data,cluster_data)
+  s <- 0
+  b <- NULL
+  for(i in 1:3){
+    w<- tab[,i]
+    m <- max(w)
+    wm <- which.max(w)
+    while(wm %in% b){
+      w <- w[-wm,]
+      m <- max(w)
+      wm <- which.max(w)
+    }
+    s<- s+m
+  }
+  s <- s/100
+  return(s)
+  }
 ```
 
 
@@ -94,7 +105,7 @@ create_data <- function(sampling, p, sigma_e){
 
 ### Q3
 Choose 4 levels of σ^2 and use p = 10, 20, 50.
-choosing sigma : 1,7,150,212
+choosing sigma : 1,2,6,9
 
 ### Q4
 For each combination of σ^2 and p, generate multiple datasets (say B = 50).
@@ -103,7 +114,7 @@ For each combination of σ^2 and p, generate multiple datasets (say B = 50).
 For each data-set, run K-means once on the p dimensional data, and save accuracy and
 run-time.
 ```{r, warning=FALSE}
-sigma_list <- c(1,7,150,212)
+sigma_list <- c(1,2,6,9)
 p <- c(10,20,50)
 simulation <- function(sampling,p,sigma_list,B){
   s_total <- NULL
@@ -120,12 +131,15 @@ simulation <- function(sampling,p,sigma_list,B){
 }
 
 gene <- simulation(sampling,p,sigma_list,50)
-l <- c(paste0("p = ",10, ",sigma = ",1),paste0("p = ",10, ",sigma = ",7),
-      paste0("p = ",10, ",sigma = ",150),paste0("p = ",10, ",sigma = ",212),
-      paste0("p = ",20, ",sigma = ",1),paste0("p = ",20, ",sigma = ",7),
-      paste0("p = ",20, ",sigma = ",150),paste0("p = ",20, ",sigma = ",212),
-      paste0("p = ",50, ",sigma = ",1),paste0("p = ",50, ",sigma = ",7),
-      paste0("p = ",50, ",sigma = ",150),paste0("p = ",50, ",sigma = ",212))
+l <- c(paste0("p = ",10, ",sigma = ",1),paste0("p = ",10, ",sigma = ",2),
+      paste0("p = ",10, ",sigma = ",6),paste0("p = ",10, ",sigma = ",9),
+      paste0("p = ",20, ",sigma = ",1),paste0("p = ",20, ",sigma = ",2),
+      paste0("p = ",20, ",sigma = ",6),paste0("p = ",20, ",sigma = ",9),
+      paste0("p = ",50, ",sigma = ",1),paste0("p = ",50, ",sigma = ",2),
+      paste0("p = ",50, ",sigma = ",6),paste0("p = ",50, ",sigma = ",9))
+
+k_sh_p <- c(rep(10,4),rep(20,4),rep(50,4))
+k_col_sig <- rep(sigma_list,3)
 ```
 
 
@@ -152,17 +166,19 @@ row.names(temp) <- l
 
 ```{r}
 temp <- as.data.frame(temp)
-ggplot(temp,aes(x = sd_accurancy, y = avg)) + geom_point()
+temp <- cbind(temp,k_col_sig,k_sh_p)
+ggplot(temp,aes(x = sd_accurancy, y = avg, color = factor(k_col_sig), shape = factor(k_sh_p))) + geom_point()
 
 ```
 
 ```{r}
+
 #kable(temp) %>% kable_styling()
 ```
 
 ```{r}
 temp2 <-bind_rows(temp2, .id = "column_label")
-ggplot(temp2, aes(x = run.time, y = accurancy, group = column_label, col = column_label)) + geom_point() + facet_wrap(~column_label)+ theme(legend.position = "none")
+ggplot(temp2, aes(x = run.time, y = accurancy, group = column_label, col = column_label)) + geom_point()+ facet_wrap(~column_label)+ theme(legend.position = "none")
 ```
 
 
