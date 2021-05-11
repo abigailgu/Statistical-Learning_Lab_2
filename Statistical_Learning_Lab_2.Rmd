@@ -272,9 +272,9 @@ library(dplyr)
 library(data.table)
 k_means_shiny <- function(k){
   data_prep <- scale(med_dat,T,T)
+  data_prep[is.na(data_prep)] <- 0
   m_new <- sample_n(med_dat,k)
-  c_t <- lapply(data_prep ,FUN = c_fun, m=m_new)
-  print(c_t)
+  c_t <- apply(data_prep,1 ,FUN = c_fun, m=m_new)
   
   
   #while(any(abs(m_new - m_old)) > 0.001){
@@ -288,12 +288,12 @@ k_means_shiny <- function(k){
 }
 
 c_fun <- function(d,m){
-  print(d)
-  p <- (m - d)**2
-  p <- lapply(p,sum)
-  p <- lapply(p,which.min)
-  #return(which.min(p))
-  #print(p)
+  p <- (sweep(m,2,d))**2
+  print(m)
+  print(p)
+  p <- apply(p,1,sum)
+  p <- which.min(p)
+  return(p)
 }
 
 med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct',
