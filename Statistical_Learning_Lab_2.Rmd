@@ -31,16 +31,17 @@ Generate the first 10 coordinates of each µj vector j = 1, ..,3
 ```{r, warning=FALSE}
 options(scipen = 999)
 
-
 ob <- c(rep(1,20),rep(2,30),rep(3,50))
 sampling <- NULL
+
 for (i in 1:10) {
 first_10 <- rnorm(3,0,1) #mu
 sampling <- rbind(sampling,first_10)
 colnames(sampling) <- c(1:3)
 }
-
 ```
+
+
 
 ```{r}
 calculate.accuracy <- function(data, cluster_data){
@@ -62,6 +63,7 @@ calculate.accuracy <- function(data, cluster_data){
   return(s)
   }
 ```
+
 
 
 ```{r}
@@ -203,6 +205,7 @@ names_df <- as.data.frame(knesset_df[,2:3])
 CBS_df <- left_join(CBS_df, names_df)
 
 #semple 20 locations 
+set.seed(20)
 Semp_20 <- sample(merged_df$"סמל.ישוב" , 20)
 
 # sum all the votes for each location 
@@ -217,40 +220,32 @@ CBS_semp20 <- filter(CBS_df, CBS_df$"סמל.ישוב" %in% Semp_20)
 
 ### Q2
 
-In this question we created dendogram that present the minimum distance between the 20 locations that we sampled and divides them into four clusters.
-we used the Single linked method becouse we would like to see clusters of cities that  the voting patterns among them are the closest.
-
-
-#לנסות לבדוק מה מספר האשכולות האופטימלי
-#לנסות לבדוק את השיטה של החלוקה ולהראות שמספק האשכולות מוצדק 
 ```{r}
 knesst_dist <- knesset_semp20[,c(8:46)] %>% dist %>% hclust(method = "complete")
 knesst_dend <- as.dendrogram(knesst_dist)
 labels(knesst_dend) <- as.character(knesset_semp20$'שם.ישוב')
 
-Knesst_plot <- ggplot(knesst_dend %>% set('branches_k_color', k = 4) %>%
-                set('branches_lwd', 0.7) %>%
-                set('labels_colors', k = 4) %>%
-                set('labels_cex', 0.8), 
-                horiz = TRUE) + ggtitle("Hirarchical tree of the 24 election datas with Single linked algorithm", "*Each color present diffrent cluster")
+Knesst_plot <- ggplot(knesst_dend %>% 
+                        set('branches_lwd', 0.7) %>%
+                        set('labels_cex', 0.8),
+                        horiz = TRUE) + 
+                    ggtitle("Hirarchical tree of the 24 election datas with complete linked algorithm", "*Each color present diffrent cluster")
 
 Knesst_plot
 ```
 
 
 ### Q3
-Similer to Q2 we choose here to use the singel linked method so we can see in each cluster the cities that have similar Characteristic properties which used for calculating a socio-economic index. 
 
 ```{r}
-CBS_dist <- CBS_semp20[,6:17] %>% scale %>% dist %>% hclust(method = "single")
+CBS_dist <- CBS_semp20[,6:17] %>% scale %>% dist %>% hclust(method = "complete")
 CBS_dend <- as.dendrogram(CBS_dist)
 labels(CBS_dend) <- as.character(CBS_semp20$'שם.ישוב')
 
-CBS_plot <- ggplot(CBS_dend %>% set('branches_k_color', k = 4) %>%
-                set('branches_lwd', 0.7) %>%
-                set('labels_colors', k = 4) %>%
-                set('labels_cex', 0.8), 
-                horiz = TRUE) + ggtitle("Hirarchical tree of the CBS datas with Single linked algorithm", "*Each color present diffrent cluster")
+CBS_plot <- ggplot(CBS_dend %>% 
+                     set('branches_lwd', 0.7) %>% 
+                     set('labels_cex', 0.8), horiz = TRUE) + 
+                  ggtitle("Hirarchical tree of the CBS datas with complete linked algorithm", "*Each color present diffrent cluster")
 
 CBS_plot
 ```
@@ -268,20 +263,62 @@ dl <- dendlist(highlight_branches_col(knesst_dend), highlight_branches_col(CBS_d
 tanglegram(dl, sort = TRUE, common_subtrees_color_lines = FALSE, highlight_distinct_edges  = FALSE, highlight_branches_lwd = FALSE, main_left = "CBS", main_right = "Knesset") 
 ```
 
-After examining the visual comparison between the trees we understand that our hypothesis is correct and that although both trees have some exact characteristics but most cities get a completely different characterization in each of the dendograms.
+After examining the visual comparison between the trees we understand that our hypothesis is Almost right< most of the cities were given a different location in each tree and there appears to be no connection between the two trees 
 
-However, this does not mean that one of the dendograms is incorrect, the reason for the large differences between the two is a different effect of socioeconomic status on the population in each city, in addition we should remember that the population in the State of Israel is very far from being a homogeneous population. 
+However, this does not mean that one of the dendograms is incorrect, the reason for the large differences between the two is a different effect of socioeconomic status on the population in each city, in addition we should remember that the population in Israel is very far from being a homogeneous population. 
 
 
 ### Q5
+In this question we were asked to choos score witch calculate the similarity between the two trees. 
+We choose the 
+
+
+בחרנו את המדד של בייקר גמה, המדד הזה בעצם בוחר שתי ערים ובודק מהו הסיכוי הגבוה ביותר שתחת מספר מסויים של אשכולות שתי הערי יהיו עדיין תחת אשכול מסויים.
+המספר של האשכולות מוחזר ואז עושים את אותו הדבר עבור שתי הערים בעץ השני. 
+עושים את זה אן מעל 2 פעמים, זא לכל הזוגות האפשריים בעץ.
+שומרים את כל המסספרים שקיבלנו בשתי רשימות, אחת עבור כל עץ ואז עושם מתאם פירסון בין שתי קבוצות המספרים ומקבלים את הקורלציה בין העצים.
+
+
 ```{r, message=F, error=F, warning=F}
+dend <- knesst_dend
+dend1 <- CBS_dend
+
+cor <- cor_bakers_gamma(dend,dend1)
+cor
 
 ```
 
+קיבלנו קורלציה קרובה מאוד ל0 בין שתי הדנדוגרמות. 
+משמעות הדבר היא שכמעט ואין קש רבין שתי הדנדוגרמות. 
+
 
 ### Q6
-```{r, message=F, error=F, warning=F}
+בשאלה זו התבקשנו למצוא את ההתפלגות של המתאם בין העצים, נבצע מבחן פרמוטציה על העץ המייצג את תוצאות הבחירות. 
+עבור כל פרמוטציה נחשב את הקורלציה בין העץ המקורי לעץ הנדגם החדש. 
+השערת האפס הינה שבין :......
 
+ייצרנו גרף של התוצאות שקיבלנו 
+
+```{r, message=F, error=F, warning=F}
+the_cor <- cor_bakers_gamma(dend,dend)
+
+R <- 100
+cor_bakers_gamma_results <- numeric(R)
+dend_mixed <- dend
+for(i in 1:R) {
+   dend_mixed <- sample.dendrogram(dend_mixed, replace = FALSE)
+   cor_bakers_gamma_results[i] <- cor_bakers_gamma(dend, dend_mixed)
+}
+
+
+plot(density(cor_bakers_gamma_results),
+     main = "Baker's gamma distribution under H0",
+     xlim = c(-1,1))
+abline(v = 0, lty = 2)
+abline(v = the_cor, lty = 2, col = 2)
+legend("topleft", legend = c("cor"), fill = c(2,4))
+title(sub = paste("One sided p-value:",
+                  "cor =",  round(sum(the_cor < cor_bakers_gamma_results)/ R, 4)))
 ```
 
 
@@ -289,8 +326,7 @@ However, this does not mean that one of the dendograms is incorrect, the reason 
 # **3. Exploratory analysis of RNA seq data:**
 
 ```{r, message=F, error=F, warning=F}
-library(dplyr)
-library(data.table)
+
 k_means_shiny <- function(k){
   data_prep <- scale(med_dat,T,T)
   data_prep[is.na(data_prep)] <- 0
@@ -317,7 +353,9 @@ c_fun <- function(d,m){
   return(p)
 }
 
-med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct',
+# med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct',
+#                      skip = 2 ,row.names=c(1) , header = TRUE)
+med_dat <- read.delim("C:/Users/Shahar/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct",
                       skip = 2 ,row.names=c(1) , header = TRUE)
 gen_names <- med_dat[, 1]
 med_dat <- med_dat[,-1]
