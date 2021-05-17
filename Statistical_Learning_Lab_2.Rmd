@@ -55,7 +55,7 @@ calculate.accuracy <- function(data, cluster_data){
     while(wm %in% b){
       w <- w[-wm,]
       m <- max(w)
-      wm <- which.max(w)
+      wm <- colnames(w)[which.max(w)]
     }
     s<- s+m
   }
@@ -155,7 +155,7 @@ for(i in 1:12){
   df <- rbindlist(lapply(df, as.data.frame.list))
   colnames(df) <- c("accurancy", "run.time")
   temp2 <- rbind(temp2,list(df))
-  df <- round(c(avg = mean(df$accurancy),sd_accurancy = sd(df$accurancy)),3)
+  df <- round(c(avg = mean(df$accurancy),sd_accurancy = sd(df$accurancy)/sqrt(50)),3)
   temp <- rbind(temp,df)
 }
 names(temp2) <- l
@@ -166,33 +166,66 @@ row.names(temp) <- l
 ```{r}
 temp <- as.data.frame(temp)
 temp <- cbind(temp,k_col_sig,k_sh_p)
-ggplot(temp,aes(x = sd_accurancy, y = avg, color = factor(k_col_sig), shape = factor(k_sh_p))) +
-  geom_point(size = 2) +   theme_light()  +
-  xlab("Accurancy Standard Error")+ ylab("Accurancy Average") +
-  ggtitle(label = "Averege vs Standard Error", subtitle = "Caculated over 50 simulations. Displayed according to diffrant sigmas and p.") +
+
+```
+
+```{r}
+temp <- as.data.frame(temp)
+ggplot(temp,aes( y = avg,x=factor(k_sh_p))) +
+  geom_bar(stat="identity",position="dodge") +
+  facet_grid(~factor(k_col_sig))+
+  geom_errorbar(data = temp,aes(ymin=avg-sd_accurancy,
+  ymax=avg + sd_accurancy), width=.2,position=position_dodge(.9)) + 
+    geom_text(aes(label=avg), vjust=1.6, color="white", size=3.5)+
+  facet_grid(~factor(k_col_sig))+ theme_light()  +
+  xlab("Devided by p level")+
+  ylab("Accurancy Average") +
+  ggtitle(label = "Averege Bar plot", subtitle = "Caculated over 50 simulations. Displayed by the different sigmas and p with standard error bar") +
   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
         plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold")) +
   theme(legend.title = element_text(color = "black", size = 10),
           legend.text = element_text(color = "black")) +
-  labs(shape="Vectors Variables \n Number", colour="SE of \n the Vectors")
+  labs(shape="Vectors Variables \n Number", colour="SE of \n the Vectors") + ylim(c(0,1))
+
+
+
+
 ```
+
 
 ```{r}
 
 #kable(temp) %>% kable_styling()
 ```
 
+
 ```{r}
 temp2 <-bind_rows(temp2, .id = "column_label")
-ggplot(temp2, aes(y = run.time, x = accurancy, group = column_label)) + geom_point()+ facet_wrap(~column_label)+ theme(legend.position = "none") +
-    theme_gray()  +
-  xlab("Accurancy of K-means")+ ylab("Run time for K-mean convergence") +
+k_sh_p <- c(rep(10,4*50),rep(20,4*50),rep(50,4*50))
+k_col_sig <- rep(rep(sigma_list, each = 50),3)
+temp2 <- cbind(temp2,k_col_sig,k_sh_p)
+
+ggplot(temp2, aes(x = run.time, y = accurancy, color =factor(k_sh_p) )) +
+  geom_point(position = position_jitter(w = 0.001))+ facet_wrap(~factor(k_col_sig))+ theme(legend.position = "none") +
+    theme_gray()  + ylim(c(0,1)) +
+  ylab("Accurancy of K-means")+ xlab("Run time for K-mean convergence") +
   ggtitle(label = "Run time vs Accurancy", subtitle = "Displayed diffrant sigmas and p.") +   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
         plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold"))
 ```
+```{r}
+ggplot(temp2, aes(y = run.time, x =factor(k_sh_p))) + facet_grid(~factor(k_col_sig))+
+  geom_point(size = 1,alpha = 0.6) + 
+  stat_summary(geom = "point",
+    fun = "mean", col = "red",size = 1, fill = "red") +
+  theme(legend.position = "none") + 
+    theme_light() + ylim(c(0,0.002))+
+  xlab("")+ ylab("Run time for K-mean convergence") +
+  ggtitle(label = "Run time vs Accurancy", subtitle = "Displayed diffrant sigmas and p.") +
+  theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold")) +
+  theme(axis.text.x = element_text(angle = 50, vjust = 0.5))
 
-
-
+```
 
 # **2. Comparing demographic and election data:**
 
