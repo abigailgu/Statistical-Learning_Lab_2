@@ -171,13 +171,13 @@ temp <- cbind(temp,k_col_sig,k_sh_p)
 
 ```{r}
 temp <- as.data.frame(temp)
-ggplot(temp,aes( y = avg,x=factor(k_sh_p))) +
+ggplot(temp,aes( y = avg,x=factor(k_col_sig))) +
   geom_bar(stat="identity",position="dodge") +
-  facet_grid(~factor(k_col_sig))+
+  facet_grid(~factor(k_sh_p))+
   geom_errorbar(data = temp,aes(ymin=avg-sd_accurancy,
   ymax=avg + sd_accurancy), width=.2,position=position_dodge(.9)) + 
     geom_text(aes(label=avg), vjust=1.6, color="white", size=3.5)+
-  facet_grid(~factor(k_col_sig))+ theme_light()  +
+  facet_grid(~factor(k_sh_p))+ theme_light()  +
   xlab("Devided by p level")+
   ylab("Accurancy Average") +
   ggtitle(label = "Averege Bar plot", subtitle = "Caculated over 50 simulations. Displayed by the different sigmas and p with standard error bar") +
@@ -213,7 +213,7 @@ ggplot(temp2, aes(x = run.time, y = accurancy, color =factor(k_sh_p) )) +
         plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold"))
 ```
 ```{r}
-ggplot(temp2, aes(y = run.time, x =factor(k_sh_p))) + facet_grid(~factor(k_col_sig))+
+ggplot(temp2, aes(y = run.time, x =factor(k_col_sig))) + facet_grid(~factor(k_sh_p))+
   geom_point(size = 1,alpha = 0.6) + 
   stat_summary(geom = "point",
     fun = "mean", col = "red",size = 1, fill = "red") +
@@ -223,7 +223,7 @@ ggplot(temp2, aes(y = run.time, x =factor(k_sh_p))) + facet_grid(~factor(k_col_s
   ggtitle(label = "Run time vs Accurancy", subtitle = "Displayed diffrant sigmas and p.") +
   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
         plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold")) +
-  theme(axis.text.x = element_text(angle = 50, vjust = 0.5))
+  theme(axis.text.x = element_text(angle = 00, vjust = 0.5))
 
 ```
 
@@ -374,7 +374,7 @@ title(sub = paste("One sided p-value:",
 k_means_shiny <- function(k){
   data_prep <- scale(med_dat,T,T)
   data_prep[is.na(data_prep)] <- 0
-  m_new <- sample_n(med_dat,k)
+  m_new <- as.data.frame(data_prep[sample(1:53,k),])
   c_t <- apply(data_prep,1 ,FUN = c_fun, m=m_new)
   
   
@@ -389,18 +389,18 @@ k_means_shiny <- function(k){
 }
 
 c_fun <- function(d,m){
-  p <- (sweep(m,2,d))**2
-  print(m)
-  print(p)
-  p <- apply(p,1,sum)
+  p <- sweep(m,2,d,FUN = "-")
+  p <- as.data.frame(p)^2
+  p <- as.matrix(apply(p,1, sum))
   p <- which.min(p)
+  print(p)
   return(p)
 }
 
-# med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct',
-#                      skip = 2 ,row.names=c(1) , header = TRUE)
-med_dat <- read.delim("C:/Users/Shahar/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct",
+med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct',
                       skip = 2 ,row.names=c(1) , header = TRUE)
+#med_dat <- read.delim("C:/Users/Shahar/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct",
+#                      skip = 2 ,row.names=c(1) , header = TRUE)
 gen_names <- med_dat[, 1]
 med_dat <- med_dat[,-1]
 med_dat <- transpose(med_dat)
