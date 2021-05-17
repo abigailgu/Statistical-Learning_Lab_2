@@ -166,8 +166,15 @@ row.names(temp) <- l
 ```{r}
 temp <- as.data.frame(temp)
 temp <- cbind(temp,k_col_sig,k_sh_p)
-ggplot(temp,aes(x = sd_accurancy, y = avg, color = factor(k_col_sig), shape = factor(k_sh_p))) + geom_point()
-
+ggplot(temp,aes(x = sd_accurancy, y = avg, color = factor(k_col_sig), shape = factor(k_sh_p))) +
+  geom_point(size = 2) +   theme_light()  +
+  xlab("Accurancy Standard Error")+ ylab("Accurancy Average") +
+  ggtitle(label = "Averege vs Standard Error", subtitle = "Caculated over 50 simulations. Displayed according to diffrant sigmas and p.") +
+  theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold")) +
+  theme(legend.title = element_text(color = "black", size = 10),
+          legend.text = element_text(color = "black")) +
+  labs(shape="Vectors Variables \n Number", colour="SE of \n the Vectors")
 ```
 
 ```{r}
@@ -177,7 +184,11 @@ ggplot(temp,aes(x = sd_accurancy, y = avg, color = factor(k_col_sig), shape = fa
 
 ```{r}
 temp2 <-bind_rows(temp2, .id = "column_label")
-ggplot(temp2, aes(x = run.time, y = accurancy, group = column_label, col = column_label)) + geom_point()+ facet_wrap(~column_label)+ theme(legend.position = "none")
+ggplot(temp2, aes(y = run.time, x = accurancy, group = column_label)) + geom_point()+ facet_wrap(~column_label)+ theme(legend.position = "none") +
+    theme_gray()  +
+  xlab("Accurancy of K-means")+ ylab("Run time for K-mean convergence") +
+  ggtitle(label = "Run time vs Accurancy", subtitle = "Displayed diffrant sigmas and p.") +   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
+        plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold"))
 ```
 
 
