@@ -370,32 +370,30 @@ title(sub = paste("One sided p-value:",
 # **3. Exploratory analysis of RNA seq data:**
 
 ```{r, message=F, error=F, warning=F}
-
+set.seed(42)
 k_means_shiny <- function(k){
-  data_prep <- scale(med_dat,T,T)
+  data_prep <- scale(med_dat_2,T,T)
   data_prep[is.na(data_prep)] <- 0
-  m_new <- as.data.frame(data_prep[sample(1:53,k),])
-  c_t <- apply(data_prep,1 ,FUN = c_fun, m=m_new)
-  m_old <- as.data.frame(data_prep[sample(1:53,k),])
   
+  m_new <- as.data.frame(data_prep[sample(1:53,k),])
+  clus <- apply(data_prep,1 ,FUN = c_fun, m=m_new)
+  m_old <- as.data.frame(data_prep[sample(1:53,k),])
+  data_prep <- cbind(data_prep, clus)
   
   while(any(abs(m_new - m_old)) > 0.1){
-  data_prep$cluster <- c_t
-  print(class(data_prep))
+  data_prep <- as.data.frame(data_prep)
   m_old <- m_new
-  m_new <- data_prep %>% group_by(cluster) %>% summarise_all(.funs = c(mean="mean"))
-  print(m_new)
-  c_t <- data_prep[,-cluster]  %>% apply(1,FUN = c_fun,m = m_new)
-  print(data_prep[,cluster])
+  m_new <- aggregate(.~clus, data_prep, FUN = mean)
+  m_new <- m_new[,-1]
+  data_prep$clus<- data_prep[,-1]  %>% apply(1,FUN = c_fun,m = m_new)
   }
-  return(data_prep[,cluster])
+  return(data_prep[clus])
 }
 
 c_fun <- function(d,m){
   p <- sweep(m,2,d,FUN = "-")
-  p <- as.data.frame(p)
-  p <- p*p
-  p <- as.matrix(apply(p,1, sum))
+  p <- (as.data.frame(p))^2
+  p <- sqrt(as.matrix(apply(p,1, sum)))
   p <- which.min(p)
   return(p)
 }
@@ -413,6 +411,6 @@ med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Lear
 gen_names <- med_dat[, 1]
 med_dat <- med_dat[,-1]
 med_dat <- transpose(med_dat)
-
+med_dat_2 <- as.data.frame(med_dat[,1:100])
 
 ```
