@@ -370,9 +370,10 @@ title(sub = paste("One sided p-value:",
 # **3. Exploratory analysis of RNA seq data:**
 
 ```{r, message=F, error=F, warning=F}
-set.seed(42)
-k_means_shiny <- function(k){
+set.seed(92)
+  k_means_shiny <- function(k){
   data_prep <- scale(med_dat_2,T,T)
+  data_prep <- data_prep
   data_prep[is.na(data_prep)] <- 0
   
   m_new <- as.data.frame(data_prep[sample(1:53,k),])
@@ -386,21 +387,22 @@ k_means_shiny <- function(k){
   m_new <- aggregate(.~clus, data_prep, FUN = mean)
   m_new <- m_new[,-1]
   data_prep$clus<- data_prep[,-1]  %>% apply(1,FUN = c_fun,m = m_new)
+  print(m_new)
+  print(m_old)
   }
-  return(data_prep[clus])
+  return(data_prep$clus)
 }
 
 c_fun <- function(d,m){
-  p <- sweep(m,2,d,FUN = "-")
-  p <- (as.data.frame(p))^2
-  p <- sqrt(as.matrix(apply(p,1, sum)))
+  p <- sweep(m,1,d,FUN = "-")
+  p <- (as.data.frame(p))**2
+  p <- as.matrix(apply(p,1, sum))
   p <- which.min(p)
   return(p)
 }
 
-k_means_shiny(15)
+k_means_shiny(6)
 ```
-
 
 ```{r}
 
@@ -411,6 +413,6 @@ med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Lear
 gen_names <- med_dat[, 1]
 med_dat <- med_dat[,-1]
 med_dat <- transpose(med_dat)
-med_dat_2 <- as.data.frame(med_dat[,1:100])
+med_dat_2 <- as.data.frame(med_dat[,1:2000])
 
 ```
