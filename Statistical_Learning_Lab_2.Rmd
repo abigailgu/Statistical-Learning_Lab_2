@@ -22,27 +22,28 @@ library(fuzzyjoin)
 library(stringr)
 library(ggdendro)
 library(factoextra)
+
+options(scipen = 999)
 ```
 
 # **1. Simulation Study:**
 
 ### Q1:
-Generate the first 10 coordinates of each µj vector j = 1, ..,3
-```{r, warning=FALSE}
-options(scipen = 999)
 
-ob <- c(rep(1,20),rep(2,30),rep(3,50))
+In this question we generate the first 10 coordinates of each µj vector j = 1, ..,3 : 
+```{r, warning=FALSE}
+ob <- c(rep(1,20),rep(2,30),rep(3,50)) 
 sampling <- NULL
 
 for (i in 1:10) {
 first_10 <- rnorm(3,0,1) #mu
-sampling <- rbind(sampling,first_10)
+sampling <- rbind(sampling,first_10) 
 colnames(sampling) <- c(1:3)
 }
 ```
 
 
-
+Here we creates an auxiliary functions that will help us in the following questions: 
 ```{r}
 calculate.accuracy <- function(data, cluster_data){
   tab <- table(data,cluster_data)
@@ -62,11 +63,7 @@ calculate.accuracy <- function(data, cluster_data){
   s <- s/100
   return(s)
   }
-```
 
-
-
-```{r}
 
 multi_fun <- function(s){
   start.time <- Sys.time()
@@ -80,8 +77,11 @@ multi_fun <- function(s){
 
 ```
 
+
 ### Q2:
+
 Write a function that outputs a simulated dataset of dimension (100 × p)
+
 ```{r}
 create_data <- function(sampling, p, sigma_e){
   x_data <- NULL
@@ -102,25 +102,38 @@ create_data <- function(sampling, p, sigma_e){
 }
 ```
 
+
 ### Q3
+
 Choose 4 levels of σ^2 and use p = 10, 20, 50.
 choosing sigma : 1,2,6,9
 
+```{r}
+sigma_list <- c(1,2,6,9)
+```
+
+
 ### Q4
-For each combination of σ^2 and p, generate multiple datasets (say B = 50).
+
+For each combination of σ^2 and p we would like to generate multiple datasets (say B = 50).
+We will write the solution for this question in the code of question 5 below. 
 
 ### Q5
+
 For each data-set, run K-means once on the p dimensional data, and save accuracy and
 run-time.
+
+The following function performs fifty simulations for each combination of sigma and p. 
+In which after the data is generated it calculates for it the accuracy of the K-MEAN algorithm and its runtime and keeps the information relevant to us for further reference only.
+
 ```{r, warning=FALSE}
-sigma_list <- c(1,2,6,9)
 p <- c(10,20,50)
 simulation <- function(sampling,p,sigma_list,B){
   s_total <- NULL
   for (i in p) {
     for (j in sigma_list) {
       s <- NULL
-      s <- replicate( n = B,sampling,simplify = F)
+      s <- replicate(n = B,sampling,simplify = F)
       s <- lapply(s,create_data,p = i,sigma_e = j)
       s <- lapply(s, multi_fun)
       s_total <- cbind(s_total,s)
@@ -143,6 +156,7 @@ k_col_sig <- rep(sigma_list,3)
 
 
 ### Q6
+
 Compute the average accuracy and the standard-error for each (p, σ2). Display these in a figure and a
 table.
 
@@ -162,11 +176,9 @@ names(temp2) <- l
 row.names(temp) <- l
 ```
 
-
 ```{r}
 temp <- as.data.frame(temp)
 temp <- cbind(temp,k_col_sig,k_sh_p)
-
 ```
 
 ```{r}
@@ -180,16 +192,12 @@ ggplot(temp,aes( y = avg,x=factor(k_col_sig))) +
   facet_grid(~factor(k_sh_p))+ theme_light()  +
   xlab("Devided by p level")+
   ylab("Accurancy Average") +
-  ggtitle(label = "Averege Bar plot", subtitle = "Caculated over 50 simulations. Displayed by the different sigmas and p with standard error bar") +
+  ggtitle(label = "Averege acurrency bar plot", subtitle = "Caculated over 50 simulations. Displayed by the different sigmas and p with standard error bar") +
   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
         plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold")) +
   theme(legend.title = element_text(color = "black", size = 10),
           legend.text = element_text(color = "black")) +
   labs(shape="Vectors Variables \n Number", colour="SE of \n the Vectors") + ylim(c(0,1))
-
-
-
-
 ```
 
 
@@ -238,7 +246,7 @@ CBS_df <- read_excel("C:/Users/Shahar/Dropbox/zugi/lemida/t01.xls")
 ### Q1
 
 In this question we sampled 20 different locations that we would like to investigate.
-We used the socio economic data from 2013 from the ISB website for the socio economic data and the 24 election results data.
+We used the socio-economic data from 2013 from the ISB website for the socio-economic data frame and the 24 election results data frame.
 
 ```{r,message=F}
 #first, we merge the data frames to find the matching locations in both. 
@@ -263,6 +271,11 @@ CBS_semp20 <- filter(CBS_df, CBS_df$"סמל.ישוב" %in% Semp_20)
 
 
 ### Q2
+In this question we construct a hierarchical tree for the elections data.
+
+for this calculation we decided to take only the scaled votes results from the data frame, the reason is that we want to investigate wich cities behave in a similer way and to see if the algorithem will collapse this cites to similer clusters. 
+
+We decided to define the distances between two cities by the complete linked algorithem. we want to see in the tree the conection between clusters of cities that have the maximal distance between them. 
 
 ```{r}
 knesst_dist <- knesset_semp20[,c(8:46)] %>% dist %>% hclust(method = "complete")
@@ -272,15 +285,18 @@ labels(knesst_dend) <- as.character(knesset_semp20$'שם.ישוב')
 Knesst_plot <- ggplot(knesst_dend %>% 
                         set('branches_lwd', 0.7) %>%
                         set('labels_cex', 0.8),
-                        horiz = TRUE) + 
-                    ggtitle("Hirarchical tree of the 24 election datas with complete linked algorithm", "*Each color present diffrent cluster")
+                        horiz = TRUE,  theme = theme_minimal()) + 
+                    ggtitle("Hirarchical tree of the 24 election datas with complete linked algorithm", "*Each color present diffrent cluster") + ylab("Distance") + xlab(" ")
 
 Knesst_plot
 ```
 
 
 ### Q3
+In this question we construct a hierarchical tree for the socio-economic 2013 data frame.
+we used only the values which dascribe the diffrenete in socio-economic status between the cities.
 
+Again we decided to use the complete linked algorithm.
 ```{r}
 CBS_dist <- CBS_semp20[,6:17] %>% scale %>% dist %>% hclust(method = "complete")
 CBS_dend <- as.dendrogram(CBS_dist)
@@ -288,8 +304,8 @@ labels(CBS_dend) <- as.character(CBS_semp20$'שם.ישוב')
 
 CBS_plot <- ggplot(CBS_dend %>% 
                      set('branches_lwd', 0.7) %>% 
-                     set('labels_cex', 0.8), horiz = TRUE) + 
-                  ggtitle("Hirarchical tree of the CBS datas with complete linked algorithm", "*Each color present diffrent cluster")
+                     set('labels_cex', 0.8), horiz = TRUE, theme = theme_minimal()) + 
+                  ggtitle("Hirarchical tree of the CBS datas with complete linked algorithm", "*Each color present diffrent cluster")+ ylab("Distance") + xlab(" ")
 
 CBS_plot
 ```
@@ -304,7 +320,7 @@ Even before we see the visual comparison we tend to think that while there are s
 ```{r}
 dl <- dendlist(highlight_branches_col(knesst_dend), highlight_branches_col(CBS_dend))
 
-tanglegram(dl, sort = TRUE, common_subtrees_color_lines = FALSE, highlight_distinct_edges  = FALSE, highlight_branches_lwd = FALSE, main_left = "CBS", main_right = "Knesset") 
+tanglegram(dl, sort = TRUE, highlight_distinct_edges  = FALSE, highlight_branches_lwd = FALSE, main_left = "CBS", main_right = "Knesset", dLeaf_left = 0.01 , dLeaf_right = -0.6) 
 ```
 
 After examining the visual comparison between the trees we understand that our hypothesis is Almost right< most of the cities were given a different location in each tree and there appears to be no connection between the two trees 
@@ -313,14 +329,9 @@ However, this does not mean that one of the dendograms is incorrect, the reason 
 
 
 ### Q5
-In this question we were asked to choos score witch calculate the similarity between the two trees. 
-We choose the 
 
-
-בחרנו את המדד של בייקר גמה, המדד הזה בעצם בוחר שתי ערים ובודק מהו הסיכוי הגבוה ביותר שתחת מספר מסויים של אשכולות שתי הערי יהיו עדיין תחת אשכול מסויים.
-המספר של האשכולות מוחזר ואז עושים את אותו הדבר עבור שתי הערים בעץ השני. 
-עושים את זה אן מעל 2 פעמים, זא לכל הזוגות האפשריים בעץ.
-שומרים את כל המסספרים שקיבלנו בשתי רשימות, אחת עבור כל עץ ואז עושם מתאם פירסון בין שתי קבוצות המספרים ומקבלים את הקורלציה בין העצים.
+In this question we were asked to choos score wich calculate the similarity between the two trees. 
+We choose the bakers gamma score, it is defined as the rank correlation between the stages at which pairs of objects combine in each of the two trees.
 
 
 ```{r, message=F, error=F, warning=F}
@@ -328,43 +339,52 @@ dend <- knesst_dend
 dend1 <- CBS_dend
 
 cor <- cor_bakers_gamma(dend,dend1)
-cor
-
+print(paste("The correlation between the two dendograms is: ", round(cor,3)))
 ```
 
-קיבלנו קורלציה קרובה מאוד ל0 בין שתי הדנדוגרמות. 
-משמעות הדבר היא שכמעט ואין קש רבין שתי הדנדוגרמות. 
+In this case we see that we got small correlation between the two dendograms. 
+it means that thr two hirarchical trees almost dosent have conection between them.
+the conection is a small nagative conection. 
 
 
 ### Q6
-בשאלה זו התבקשנו למצוא את ההתפלגות של המתאם בין העצים, נבצע מבחן פרמוטציה על העץ המייצג את תוצאות הבחירות. 
-עבור כל פרמוטציה נחשב את הקורלציה בין העץ המקורי לעץ הנדגם החדש. 
-השערת האפס הינה שבין :......
 
-ייצרנו גרף של התוצאות שקיבלנו 
+In this question we were asked to find a background distribution for this score. 
+To do this we randomly permute the labels of the knesset tree while keeping the labels of thr CBS tree fixed. 
+Our null hypothesis is that the correlation between the two trees is that the dendogram are fully correlated to herself in all of the permutations that we create. 
+
 
 ```{r, message=F, error=F, warning=F}
-the_cor <- cor_bakers_gamma(dend,dend)
+the_cor <- cor_bakers_gamma(dend,dend) #we see that the correlation between the dend to herself is 1
+the_cor2 <- cor_bakers_gamma(dend,dend1) #the correlation between the two dendograms that we created
 
 R <- 100
 cor_bakers_gamma_results <- numeric(R)
 dend_mixed <- dend
-for(i in 1:R) {
+for(i in 1:R) { #compute the corr between the original dendograme to the permutation dendogram 
    dend_mixed <- sample.dendrogram(dend_mixed, replace = FALSE)
    cor_bakers_gamma_results[i] <- cor_bakers_gamma(dend, dend_mixed)
 }
-
 
 plot(density(cor_bakers_gamma_results),
      main = "Baker's gamma distribution under H0",
      xlim = c(-1,1))
 abline(v = 0, lty = 2)
 abline(v = the_cor, lty = 2, col = 2)
-legend("topleft", legend = c("cor"), fill = c(2,4))
+abline(v = the_cor2, lty = 2, col = 4)
+legend("topleft", legend = c("cor", "cor2"), fill = c(2,4))
+round(sum(the_cor2 < cor_bakers_gamma_results)/ R, 4)
 title(sub = paste("One sided p-value:",
-                  "cor =",  round(sum(the_cor < cor_bakers_gamma_results)/ R, 4)))
+                  "cor =",  round(sum(the_cor < cor_bakers_gamma_results)/ R, 4),
+                  " ; cor2 =",  round(sum(the_cor2 < cor_bakers_gamma_results)/ R, 4)))
 ```
 
+In this graph we see the background distribution for the correlation score.
+we see that cor = 1, represent the correlation between the knesset dendogram to herself, and test the H0 that all of the premuted dendograms are fully correlated to the original dendogram. 
+we can see in the graph that this isent what happend. 
+Cor2 = -0.04, we check the P-value of this result and see that Pv >0.05, theres for we reject H0 and say that the premuted dendogram is not fully correalted to the original dendogram. 
+
+We have learned that althogh we thoght that permutation dendogram will give us similear trees from the same data frames it doesn't happend and we get total new dendograme in each permutation. 
 
 
 # **3. Exploratory analysis of RNA seq data:**
