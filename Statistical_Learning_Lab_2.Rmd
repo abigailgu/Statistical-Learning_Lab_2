@@ -44,6 +44,7 @@ colnames(sampling) <- c(1:3)
 
 
 Here we creates an auxiliary functions that will help us in the following questions: 
+
 ```{r}
 calculate.accuracy <- function(data, cluster_data){
   tab <- table(data,cluster_data)
@@ -63,7 +64,6 @@ calculate.accuracy <- function(data, cluster_data){
   s <- s/100
   return(s)
   }
-
 
 multi_fun <- function(s){
   start.time <- Sys.time()
@@ -200,11 +200,7 @@ ggplot(temp,aes( y = avg,x=factor(k_col_sig))) +
   labs(shape="Vectors Variables \n Number", colour="SE of \n the Vectors") + ylim(c(0,1))
 ```
 
-
-
-The graph shows the average accuracy for fifty simulations for each combination of sigma and p compared to perfect accuracy. For each column you can see the standard deviation of the accuracy for the simulations. It can be understood from the low standard steak that the accuracy compliance by the number of simulations is relatively reliable. The graph shows the difference in the ability to achieve high accuracy in classification by KMEAN as the standard deviation of the distribution from it is sampled, and the more variables there are.
-
-
+The graph shows the average accuracy for fifty simulations for each combination of sigma and p compared to perfect accuracy. For each column you can see the standard deviation of the accuracy for the simulations. It can be understood from the low standard error that the estimate for the average accuracy compliance by the number of simulations is relatively reliable. The graph shows the difference in the ability to achieve high accuracy in classification by KMEAN as the standard deviation of the distribution from it is sampled, and the more variables there are.
 
 The data shown in the table:
 ```{r}
@@ -212,11 +208,12 @@ The data shown in the table:
 kable(temp[,1:2]) %>% kable_styling()
 ```
 `
-```{r}
+```{r, warning=F}
 temp2 <-bind_rows(temp2, .id = "column_label")
 k_sh_p <- c(rep(10,4*50),rep(20,4*50),rep(50,4*50))
 k_col_sig <- rep(rep(sigma_list, each = 50),3)
 temp2 <- cbind(temp2,k_col_sig,k_sh_p)
+
 ggplot(temp2, aes(y = run.time, x =factor(k_col_sig))) + facet_grid(~factor(k_sh_p))+
  geom_boxplot()+
   stat_summary(geom = "point",
@@ -230,7 +227,8 @@ ggplot(temp2, aes(y = run.time, x =factor(k_col_sig))) + facet_grid(~factor(k_sh
 
 ```
 
-###Q8
+### Q8
+
 We have seen that the SE we obtained on the average accuracy of the simulations allows us to treat the average accuracy as reliable. On this basis it can be seen that the larger the standard deviation of the distribution from which we have drawn in advance the greater we encounter the lower ability of KMEAN to perform a correct classification, regardless of the length of the vector and the amount of variables in it. In addition it can be seen that the more variables we have in each vector, here too the algorithm has difficulty performing a correct classification, regardless of the standard deviation. It can also be seen in the graph of the runtime required for the algorithm convergence that there is an increase in time for large standard deviations and multivariate vectors, except for outliers, it should be noted that in this case these are relatively low dimensions, but for Big Data the effect may be significant.
 
 
@@ -427,10 +425,8 @@ g <- k_means_shiny(6)
 
 ```{r}
 
-med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct',
-                      skip = 2 ,row.names=c(1) , header = TRUE)
-#med_dat <- read.delim("C:/Users/Shahar/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct",
-#                      skip = 2 ,row.names=c(1) , header = TRUE)
+#med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct', skip = 2 ,row.names=c(1) , header = TRUE)
+med_dat <- read.delim("C:/Users/Shahar/Documents/GitHub/Statistical-Learning_Lab_2/gtex_Kmeans/gtex.gct", skip = 2 ,row.names=c(1) , header = TRUE)
 gen_names <- med_dat[, 1]
 med_dat <- med_dat[,-1]
 ti_name <- colnames(med_dat)
@@ -446,12 +442,5 @@ sv <- length(sv[sv < 0.9])
 m <- m$x[,1:sv]
 
 ```
-
-
-```{r}
-
-
-```
-
 
 
