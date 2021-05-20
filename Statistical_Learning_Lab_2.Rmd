@@ -350,18 +350,18 @@ the conection is a small nagative conection.
 ### Q6
 
 In this question we were asked to find a background distribution for this score. 
-
-השערת האפס הינה שהקורלציה בין הפרמוטציות גבוהה יותר מהקורלציה שקיבלנו בשני העצים 
+To do this we randomly permute the labels of the knesset tree while keeping the labels of thr CBS tree fixed. 
+Our null hypothesis is that the correlation between the two trees is that the dendogram are fully correlated to herself in all of the permutations that we create. 
 
 
 ```{r, message=F, error=F, warning=F}
-the_cor <- cor_bakers_gamma(dend,dend)
-the_cor2 <- cor_bakers_gamma(dend,dend1)
+the_cor <- cor_bakers_gamma(dend,dend) #we see that the correlation between the dend to herself is 1
+the_cor2 <- cor_bakers_gamma(dend,dend1) #the correlation between the two dendograms that we created
 
 R <- 100
 cor_bakers_gamma_results <- numeric(R)
 dend_mixed <- dend
-for(i in 1:R) {
+for(i in 1:R) { #compute the corr between the original dendograme to the permutation dendogram 
    dend_mixed <- sample.dendrogram(dend_mixed, replace = FALSE)
    cor_bakers_gamma_results[i] <- cor_bakers_gamma(dend, dend_mixed)
 }
@@ -377,9 +377,14 @@ round(sum(the_cor2 < cor_bakers_gamma_results)/ R, 4)
 title(sub = paste("One sided p-value:",
                   "cor =",  round(sum(the_cor < cor_bakers_gamma_results)/ R, 4),
                   " ; cor2 =",  round(sum(the_cor2 < cor_bakers_gamma_results)/ R, 4)))
-
 ```
 
+In this graph we see the background distribution for the correlation score.
+we see that cor = 1, represent the correlation between the knesset dendogram to herself, and test the H0 that all of the premuted dendograms are fully correlated to the original dendogram. 
+we can see in the graph that this isent what happend. 
+Cor2 = -0.04, we check the P-value of this result and see that Pv >0.05, theres for we reject H0 and say that the premuted dendogram is not fully correalted to the original dendogram. 
+
+We have learned that althogh we thoght that permutation dendogram will give us similear trees from the same data frames it doesn't happend and we get total new dendograme in each permutation. 
 
 
 # **3. Exploratory analysis of RNA seq data:**
