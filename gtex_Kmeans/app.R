@@ -21,7 +21,7 @@ sv <- cumsum(sv)
 sv <- length(sv[sv < 0.95])
 m <- m$x[,1:sv]
 
-m<-med_dat
+#m<-med_dat
 
 k_means_shiny <- function(k){
     data_prep <- m
@@ -41,7 +41,8 @@ k_means_shiny <- function(k){
         iter <- iter +1
         
     }
-    return(data_prep)
+    data_prep <- as.data.frame(data_prep)
+    return(data_prep$clus)
 }
 
 c_fun <- function(d,m){
@@ -73,7 +74,7 @@ ui <- fluidPage(
                         "Number of clusters:",
                         min = 1,
                         max = 53,
-                        value = 7)
+                        value = 5)
         ),
 
         
@@ -89,8 +90,8 @@ server <- function(input, output) {
     output$scatterplot <- renderPlot({
         # generate bins based on input$bins from ui.R
         x <- k_means_shiny(input$bins)
-        x <-cbind(pca_p,x["clus"])
-        ggplot(data = x, aes(x =PC1, y=PC2, color = factor(clus))) + geom_point()
+        x <-cbind(pca_p,x)
+        ggplot(data = x, aes(x =PC1, y=PC2, color = factor(x))) + geom_point()
 
     })
 }
