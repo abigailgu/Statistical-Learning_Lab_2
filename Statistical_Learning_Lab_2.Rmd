@@ -190,7 +190,7 @@ ggplot(temp,aes( y = avg,x=factor(k_col_sig))) +
   ymax=avg + sd_accurancy), width=.2,position=position_dodge(.9)) + 
     geom_text(aes(label=avg), vjust=1.6, color="white", size=3.5)+
   facet_grid(~factor(k_sh_p))+ theme_light()  +
-  xlab("Devided by p level")+
+  xlab("Devided by sigma & p levels")+
   ylab("Accurancy Average") +
   ggtitle(label = "Averege acurrency bar plot", subtitle = "Caculated over 50 simulations. Displayed by the different sigmas and p with standard error bar") +
   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
@@ -201,39 +201,38 @@ ggplot(temp,aes( y = avg,x=factor(k_col_sig))) +
 ```
 
 
+
+The graph shows the average accuracy for fifty simulations for each combination of sigma and p compared to perfect accuracy. For each column you can see the standard deviation of the accuracy for the simulations. It can be understood from the low standard steak that the accuracy compliance by the number of simulations is relatively reliable. The graph shows the difference in the ability to achieve high accuracy in classification by KMEAN as the standard deviation of the distribution from it is sampled, and the more variables there are.
+
+
+
+The data shown in the table:
 ```{r}
 
-#kable(temp) %>% kable_styling()
+kable(temp[,1:2]) %>% kable_styling()
 ```
-
-
+`
 ```{r}
 temp2 <-bind_rows(temp2, .id = "column_label")
 k_sh_p <- c(rep(10,4*50),rep(20,4*50),rep(50,4*50))
 k_col_sig <- rep(rep(sigma_list, each = 50),3)
 temp2 <- cbind(temp2,k_col_sig,k_sh_p)
-
-ggplot(temp2, aes(x = run.time, y = accurancy, color =factor(k_sh_p) )) +
-  geom_point(position = position_jitter(w = 0.001))+ facet_wrap(~factor(k_col_sig))+ theme(legend.position = "none") +
-    theme_gray()  + ylim(c(0,1)) +
-  ylab("Accurancy of K-means")+ xlab("Run time for K-mean convergence") +
-  ggtitle(label = "Run time vs Accurancy", subtitle = "Displayed diffrant sigmas and p.") +   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
-        plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold"))
-```
-```{r}
 ggplot(temp2, aes(y = run.time, x =factor(k_col_sig))) + facet_grid(~factor(k_sh_p))+
-  geom_point(size = 1,alpha = 0.6) + 
+ geom_boxplot()+
   stat_summary(geom = "point",
     fun = "mean", col = "red",size = 1, fill = "red") +
-  theme(legend.position = "none") + 
     theme_light() + ylim(c(0,0.002))+
   xlab("")+ ylab("Run time for K-mean convergence") +
-  ggtitle(label = "Run time vs Accurancy", subtitle = "Displayed diffrant sigmas and p.") +
+  ggtitle(label = "Run time", subtitle = "Displayed by diffrenet sigmas and variable amouמt. \n Mean marked in red point5, Median marked in bold line. \n outliers have been left out.")+
   theme(plot.title = element_text(hjust = 0.5,size = 20, face = "bold"),
         plot.subtitle = element_text(hjust = 0.5,size = 10, face = "bold")) +
-  theme(axis.text.x = element_text(angle = 00, vjust = 0.5))
+  theme(axis.text.x = element_text(angle = 00, vjust = 0.5)) 
 
 ```
+
+###Q8
+We have seen that the SE we obtained on the average accuracy of the simulations allows us to treat the average accuracy as reliable. On this basis it can be seen that the larger the standard deviation of the distribution from which we have drawn in advance the greater we encounter the lower ability of KMEAN to perform a correct classification, regardless of the length of the vector and the amount of variables in it. In addition it can be seen that the more variables we have in each vector, here too the algorithm has difficulty performing a correct classification, regardless of the standard deviation. It can also be seen in the graph of the runtime required for the algorithm convergence that there is an increase in time for large standard deviations and multivariate vectors, except for outliers, it should be noted that in this case these are relatively low dimensions, but for Big Data the effect may be significant.
+
 
 # **2. Comparing demographic and election data:**
 
@@ -390,38 +389,40 @@ We have learned that althogh we thoght that permutation dendogram will give us s
 # **3. Exploratory analysis of RNA seq data:**
 
 ```{r, message=F, error=F, warning=F}
-set.seed(92)
-  k_means_shiny <- function(k){
-  data_prep <- scale(med_dat_2,T,T)
-  data_prep <- data_prep
-  data_prep[is.na(data_prep)] <- 0
-  
+
+k_means_shiny <- function(k){
+  data_prep <- m
   m_new <- as.data.frame(data_prep[sample(1:53,k),])
   clus <- apply(data_prep,1 ,FUN = c_fun, m=m_new)
   m_old <- as.data.frame(data_prep[sample(1:53,k),])
   data_prep <- cbind(data_prep, clus)
-  
-  while(any(abs(m_new - m_old)) > 0.1){
+  iter <- 1
+  while(any(abs(m_new - m_old)) > 0.1 & iter < 1){
   data_prep <- as.data.frame(data_prep)
   m_old <- m_new
-  m_new <- aggregate(.~clus, data_prep, FUN = mean)
+  m_new <- aggregate(. ~ clus, data_prep, FUN = mean)
   m_new <- m_new[,-1]
   data_prep$clus<- data_prep[,-1]  %>% apply(1,FUN = c_fun,m = m_new)
   print(m_new)
   print(m_old)
+  iter <- iter +1
+
   }
-  return(data_prep$clus)
+  return(data_prep)
 }
 
 c_fun <- function(d,m){
-  p <- sweep(m,1,d,FUN = "-")
-  p <- (as.data.frame(p))**2
-  p <- as.matrix(apply(p,1, sum))
+  p <- NULL
+  for (i in 1:length(m[,1])) {
+    x <- rbind(d,m[i,])
+    di <- dist(x, method = 'euclidean')
+    p <- cbind(p,di)
+  }
   p <- which.min(p)
   return(p)
 }
 
-k_means_shiny(6)
+g <- k_means_shiny(6)
 ```
 
 ```{r}
@@ -432,7 +433,25 @@ med_dat <- read.delim('C:/Users/abig4/OneDrive/Documents/GitHub/Statistical-Lear
 #                      skip = 2 ,row.names=c(1) , header = TRUE)
 gen_names <- med_dat[, 1]
 med_dat <- med_dat[,-1]
+ti_name <- colnames(med_dat)
 med_dat <- transpose(med_dat)
-med_dat_2 <- as.data.frame(med_dat[,1:2000])
+med_dat <-med_dat[,colMeans(med_dat) > 0]
+v <- apply(med_dat,2, var)
+med_dat <-med_dat[, v != 0]
+#med_dat <- as.data.frame(scale(med_dat,T,T))
+m <- prcomp(med_dat,scale. = T,center = T)
+sv <-m$sdev^2/sum(m$sdev^2)
+sv <- cumsum(sv)
+sv <- length(sv[sv < 0.9])
+m <- m$x[,1:sv]
 
 ```
+
+
+```{r}
+
+
+```
+
+
+
